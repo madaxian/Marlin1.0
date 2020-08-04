@@ -1433,42 +1433,64 @@ void process_commands()
       break;
       #endif //FWRETRACT
       case 888:
-      if (code_seen('X'))
-      {
-      int x_=code_value();
-      code_seen('Y');
-      int y_ = code_value();
-      code_seen('Z');
-      int z_ = code_value();
-      stepper_run_delta(x_,y_,z_,250);
-      // digitalWrite(X_ENABLE_PIN,LOW);
-      // digitalWrite(Y_ENABLE_PIN,LOW);
-      // digitalWrite(Z_ENABLE_PIN,LOW);
-      // if(x_>0) 
-      // {digitalWrite(X_DIR_PIN, HIGH);}
-      // else {digitalWrite(X_DIR_PIN, LOW);}
-      // if(y_<0) 
-      // {digitalWrite(Y_DIR_PIN, HIGH);}
-      // else {digitalWrite(Y_DIR_PIN, LOW);}
-      // int x;
-      // int xloop=ceil(((float)abs(x_)/360)*14*3200);
-      // for(x=0;x<xloop;x++)
+      // if (code_seen('X'))
       // {
-      // digitalWrite(X_STEP_PIN, HIGH);
-      // delayMicroseconds(200);
-      // digitalWrite(X_STEP_PIN, LOW);
-      // delayMicroseconds(200);
-      // }
+      // int x_=code_value();
+      // code_seen('Y');
+      // int y_ = code_value();
+      // code_seen('Z');
+      // int z_ = code_value();
+      // stepper_run_delta(x_,y_,z_,250);
+      // // digitalWrite(X_ENABLE_PIN,LOW);
+      // // digitalWrite(Y_ENABLE_PIN,LOW);
+      // // digitalWrite(Z_ENABLE_PIN,LOW);
+      // // if(x_>0) 
+      // // {digitalWrite(X_DIR_PIN, HIGH);}
+      // // else {digitalWrite(X_DIR_PIN, LOW);}
+      // // if(y_<0) 
+      // // {digitalWrite(Y_DIR_PIN, HIGH);}
+      // // else {digitalWrite(Y_DIR_PIN, LOW);}
+      // // int x;
+      // // int xloop=ceil(((float)abs(x_)/360)*14*3200);
+      // // for(x=0;x<xloop;x++)
+      // // {
+      // // digitalWrite(X_STEP_PIN, HIGH);
+      // // delayMicroseconds(200);
+      // // digitalWrite(X_STEP_PIN, LOW);
+      // // delayMicroseconds(200);
+      // // }
       
-      // int yloop=ceil(((float)abs(y_)/360)*3.7*3200);
-      // for(x=0;x<yloop;x++)
-      // {
-      // digitalWrite(Y_STEP_PIN, HIGH);
-      // delayMicroseconds(200);
-      // digitalWrite(Y_STEP_PIN, LOW);
-      // delayMicroseconds(200);
+      // // int yloop=ceil(((float)abs(y_)/360)*3.7*3200);
+      // // for(x=0;x<yloop;x++)
+      // // {
+      // // digitalWrite(Y_STEP_PIN, HIGH);
+      // // delayMicroseconds(200);
+      // // digitalWrite(Y_STEP_PIN, LOW);
+      // // delayMicroseconds(200);
+      // // }
       // }
-      }
+            //xsc
+    //存入转轴角度delta
+    int x_,y_,z_;
+    x_=0;
+    y_=0;
+    z_=0;
+    if (code_seen('X')){x_=code_value();delta[X_AXIS] += x_;}//
+    if (code_seen('Y')){y_=code_value();delta[Y_AXIS] += y_;}
+    if (code_seen('Z')){z_=code_value();delta[Z_AXIS] += z_;}
+    
+    stepper_run_delta(x_,y_,z_,250);
+    //算出并存坐标current_position
+
+    float x_sina, x_cosa, y_sina, y_cosa;
+    x_sina = sin(delta[X_AXIS]/SCARA_RAD2DEG) * Linkage_1;
+    x_cosa = cos(delta[X_AXIS]/SCARA_RAD2DEG) * Linkage_1;
+    y_sina = sin((delta[X_AXIS]+delta[Y_AXIS])/SCARA_RAD2DEG) * Linkage_2;
+    y_cosa = cos((delta[X_AXIS]+delta[Y_AXIS])/SCARA_RAD2DEG) * Linkage_2;
+   
+    current_position[X_AXIS] = x_cosa + y_cosa + SCARA_offset_x;  //theta
+    current_position[Y_AXIS] = x_sina + y_sina + SCARA_offset_y;  //theta+phi
+    //calculate_SCARA_forward_Transform(delta);
       break;
     case 28: //G28 Home all Axis one at a time
 #ifdef ENABLE_AUTO_BED_LEVELING
