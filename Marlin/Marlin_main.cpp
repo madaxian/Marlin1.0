@@ -971,7 +971,7 @@ static void axis_is_at_home(int axis) {
     // SERIAL_ECHOPGM("Delta X="); SERIAL_ECHO(delta[X_AXIS]);
     // SERIAL_ECHOPGM(" Delta Y="); SERIAL_ECHOLN(delta[Y_AXIS]);
      
-    current_position[axis] = delta[axis];
+    current_position[axis] = delta[axis];   //todo xsc
     
     // SCARA home positions are based on configuration since the actual limits are determined by the 
     // inverse kinematic transform.
@@ -1369,7 +1369,7 @@ void process_commands()
     case 0: // G0 -> G1
     case 1: // G1
       if(Stopped == false) {
-        get_coordinates(); // For X Y Z E F
+        get_coordinates(); // For X Y Z E F 
           #ifdef FWRETRACT
             if(autoretract_enabled)
             if( !(code_seen('X') || code_seen('Y') || code_seen('Z')) && code_seen('E')) {
@@ -1433,43 +1433,56 @@ void process_commands()
       break;
       #endif //FWRETRACT
       case 888:
-      if (code_seen('X'))
-      {
-      int x_=code_value();
-      code_seen('Y');
-      int y_ = code_value();
-      code_seen('Z');
-      int z_ = code_value();
-      stepper_run_delta(x_,y_,z_,250);
-      // digitalWrite(X_ENABLE_PIN,LOW);
-      // digitalWrite(Y_ENABLE_PIN,LOW);
-      // digitalWrite(Z_ENABLE_PIN,LOW);
-      // if(x_>0) 
-      // {digitalWrite(X_DIR_PIN, HIGH);}
-      // else {digitalWrite(X_DIR_PIN, LOW);}
-      // if(y_<0) 
-      // {digitalWrite(Y_DIR_PIN, HIGH);}
-      // else {digitalWrite(Y_DIR_PIN, LOW);}
-      // int x;
-      // int xloop=ceil(((float)abs(x_)/360)*14*3200);
-      // for(x=0;x<xloop;x++)
+  
+      // if (code_seen('X'))
       // {
-      // digitalWrite(X_STEP_PIN, HIGH);
-      // delayMicroseconds(200);
-      // digitalWrite(X_STEP_PIN, LOW);
-      // delayMicroseconds(200);
-      // }
+      // int x_=code_value();
+      // code_seen('Y');
+      // int y_ = code_value();
+      // code_seen('Z');
+      // int z_ = code_value();
+      // stepper_run_delta(x_,y_,z_,250);
+      // // digitalWrite(X_ENABLE_PIN,LOW);
+      // // digitalWrite(Y_ENABLE_PIN,LOW);
+      // // digitalWrite(Z_ENABLE_PIN,LOW);
+      // // if(x_>0) 
+      // // {digitalWrite(X_DIR_PIN, HIGH);}
+      // // else {digitalWrite(X_DIR_PIN, LOW);}
+      // // if(y_<0) 
+      // // {digitalWrite(Y_DIR_PIN, HIGH);}
+      // // else {digitalWrite(Y_DIR_PIN, LOW);}
+      // // int x;
+      // // int xloop=ceil(((float)abs(x_)/360)*14*3200);
+      // // for(x=0;x<xloop;x++)
+      // // {
+      // // digitalWrite(X_STEP_PIN, HIGH);
+      // // delayMicroseconds(200);
+      // // digitalWrite(X_STEP_PIN, LOW);
+      // // delayMicroseconds(200);
+      // // }
       
-      // int yloop=ceil(((float)abs(y_)/360)*3.7*3200);
-      // for(x=0;x<yloop;x++)
-      // {
-      // digitalWrite(Y_STEP_PIN, HIGH);
-      // delayMicroseconds(200);
-      // digitalWrite(Y_STEP_PIN, LOW);
-      // delayMicroseconds(200);
+      // // int yloop=ceil(((float)abs(y_)/360)*3.7*3200);
+      // // for(x=0;x<yloop;x++)
+      // // {
+      // // digitalWrite(Y_STEP_PIN, HIGH);
+      // // delayMicroseconds(200);
+      // // digitalWrite(Y_STEP_PIN, LOW);
+      // // delayMicroseconds(200);
+      // // }
       // }
-      }
+
+      //xsc
+    //存入转轴角度delta
+    int x_=0,y_=0,z_=0;
+    if (code_seen('X')){x_=code_value();delta[X_AXIS] += x_;}
+    if (code_seen('Y')){y_=code_value();delta[Y_AXIS] += y_;}
+    if (code_seen('Z')){z_=code_value();delta[Z_AXIS] += z_;}
+    stepper_run_delta(x_,y_,z_,250);
+    //算出并存坐标current_position
+    calculate_SCARA_forward_Transform(delta);
+
       break;
+
     case 28: //G28 Home all Axis one at a time
 #ifdef ENABLE_AUTO_BED_LEVELING
       plan_bed_level_matrix.set_to_identity();  //Reset the plane ("erase" all leveling data)
@@ -4283,9 +4296,10 @@ void calculate_SCARA_forward_Transform(float f_scara[3])
   //  SERIAL_ECHOPGM(" y_sin="); SERIAL_ECHO(y_sin);
   //  SERIAL_ECHOPGM(" y_cos="); SERIAL_ECHOLN(y_cos);
   
-    delta[X_AXIS] = x_cos + y_cos + SCARA_offset_x;  //theta
-    delta[Y_AXIS] = x_sin + y_sin + SCARA_offset_y;  //theta+phi
-	
+    current_position[X_AXIS] = x_cos + y_cos + SCARA_offset_x;  //theta  xsc更改，将delta[X_AXIS]更改为current_position[X_AXIS] 
+    current_position[Y_AXIS] = x_sin + y_sin + SCARA_offset_y;  //theta+phi   xsc更改，将delta[X_AXIS]更改为current_position[X_AXIS] 
+	  current_position[Z_AXIS] = f_scara[Z_AXIS];  //xsc添加
+
     //SERIAL_ECHOPGM(" delta[X_AXIS]="); SERIAL_ECHO(delta[X_AXIS]);
     //SERIAL_ECHOPGM(" delta[Y_AXIS]="); SERIAL_ECHOLN(delta[Y_AXIS]);
 }  
